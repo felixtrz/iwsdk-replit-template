@@ -27,6 +27,17 @@ my-iwsdk-project/
 
 ## Critical Best Practices
 
+### Browser 3D With First-Class XR
+
+IWSDK is a 3D web framework with first-class XR support. XR can be disabled for a browser-only app with `World.create(container, { xr: false })`, but the runtime still creates `world.player` as the local player/XR origin and keeps `world.camera` under it.
+
+- For first-person browser apps that may later enter XR, move `world.player` for locomotion or WASD-style movement. Treat `world.camera` as the viewer/head under that rig.
+- For orbit, editor, product, cinematic, or third-person views, it is fine to keep `world.player` at the origin and drive `world.camera` however the app needs.
+- `world.camera.position` is local to `world.player`. Use `world.camera.getWorldPosition(tempVector)` when logic needs the actual viewer position.
+- Configure the initial browser view with `render.camera` in `World.create`; do not add camera category presets unless the app explicitly needs one.
+
+Browser pointer input is enabled through `input.canvasPointerEvents` by default. Add `Interactable`/`RayInteractable` and react to `Hovered`/`Pressed` for objects that should work with both mouse/touch canvas input and XR rays. XR-specific input lives at `world.input.xr`; use `world.input.keyboard` and `world.input.browserGamepads` for low-level browser controls. Reusable systems should prefer `world.input.actions` for intent such as `locomotion.move` or `locomotion.jump`; opt into browser locomotion bindings with `features.locomotion.browserControls`.
+
 ### Feature Configuration (CRITICAL!)
 
 **This is the #1 cause of bugs in IWSDK projects.**
@@ -142,6 +153,9 @@ const world = await World.create(container, {
   assets: { myModel: { url: '/models/scene.glb', type: AssetType.GLTF } },
 });
 const gltf = AssetManager.getGLTF('myModel');
+// `getGLTF` returns a fresh clone of `scene`/`scenes` per call, so it's
+// safe to use the same key for multiple entities. Pass `{ shared: true }`
+// if you intentionally want the cached instance.
 
 // ✅ GOOD - For runtime loading
 await AssetManager.loadGLTF(url, 'myModel');
@@ -505,8 +519,8 @@ export class MySystem extends createSystem(
 
 ```typescript
 update() {
-  const leftGamepad = this.input.gamepads.left;
-  const rightGamepad = this.input.gamepads.right;
+  const leftGamepad = this.input.xr.gamepads.left;
+  const rightGamepad = this.input.xr.gamepads.right;
 
   // Button states
   leftGamepad?.getButtonPressed(InputComponent.Trigger);  // Currently held

@@ -14,19 +14,18 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@iwsdk/core": "0.3.2",
+    "@iwsdk/core": "0.4.2",
     "three": "npm:super-three@0.181.0"
   },
   "devDependencies": {
-    "@iwsdk/reference": "0.3.2",
-    "@iwsdk/cli": "0.3.2",
-    "@iwsdk/vite-plugin-dev": "0.3.2",
-    "@iwsdk/vite-plugin-uikitml": "0.3.2",
+    "@iwsdk/cli": "0.4.2",
+    "@iwsdk/reference": "0.4.2",
+    "@iwsdk/vite-plugin-dev": "0.4.2",
+    "@iwsdk/vite-plugin-uikitml": "0.4.2",
     "@meta-quest/hzdb": "^1.0.0",
     "@types/three": "*",
     "typescript": "^5.5.0",
-    "vite": "^7.1.4",
-    "vite-plugin-mkcert": "^1.17.0"
+    "vite": "^7.1.4"
   },
   "engines": {
     "node": ">=20.19.0"

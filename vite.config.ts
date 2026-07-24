@@ -2,22 +2,25 @@ import { iwsdkDev } from "@iwsdk/vite-plugin-dev";
 
 import { compileUIKit } from "@iwsdk/vite-plugin-uikitml";
 import { defineConfig } from "vite";
-import mkcert from "vite-plugin-mkcert";
 
 export default defineConfig({
   plugins: [
-    mkcert(),
     iwsdkDev({
       emulator: {
         device: "metaQuest3",
+        activation: "always",
       },
       ai: { mode: "agent" },
       verbose: true,
     }),
-
     compileUIKit({ sourceDir: "ui", outputDir: "public/ui", verbose: true }),
   ],
-  server: { host: "0.0.0.0", port: 8081, open: true },
+  server: {
+    host: "0.0.0.0",
+    port: 5000,
+    open: false,
+    allowedHosts: true,
+  },
   build: {
     outDir: "dist",
     sourcemap: process.env.NODE_ENV !== "production",
@@ -30,5 +33,5 @@ export default defineConfig({
     esbuildOptions: { target: "esnext" },
   },
   publicDir: "public",
-  base: "./",
+  base: process.env.VITE_BASE_PATH || "/",
 });

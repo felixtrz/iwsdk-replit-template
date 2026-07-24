@@ -42,6 +42,9 @@ coverage/
 .temp/
 .iwsdk/
 
+# IWSDK reference cache (large, downloaded on warmup)
+.cache/iwsdk/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -65,3 +68,9 @@ coverage/
 public/gltf/generated/
 public/glxf/
 public/ui/
+
+# Replit
+.cache/
+.config/
+.local/
+attached_assets/

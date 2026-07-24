@@ -10,7 +10,7 @@ export default defineConfig({
         device: "metaQuest3",
         activation: "always",
       },
-      ai: { mode: "agent" },
+      ai: { mode: "agent", port: 443 },
       verbose: true,
     }),
     compileUIKit({ sourceDir: "ui", outputDir: "public/ui", verbose: true }),

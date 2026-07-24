@@ -1,6 +1,6 @@
 # IWSDK Starter Template (Replit)
 
-A ready-to-run WebXR starter template using the [Immersive Web SDK](https://developers.meta.com/horizon/documentation/web/webxr-iwsdk-overview) (IWSDK) v0.4.2, pre-configured for the Replit environment.
+A ready-to-run WebXR starter template using the [Immersive Web SDK](https://developers.meta.com/horizon/documentation/web/webxr-iwsdk-overview) (IWSDK) v0.3.2, pre-configured for the Replit environment.
 
 ## What's Included
 
@@ -12,7 +12,7 @@ A ready-to-run WebXR starter template using the [Immersive Web SDK](https://deve
 
 ## Getting Started
 
-1. **Fork this Repl** — dependencies install automatically.
+1. **Fork this Repl** — dependencies install automatically, and the postinstall script patches the IWSDK dev plugin for the headless environment.
 2. **Run the workflow** — click "Run" or use `npm run dev:runtime`. The Vite dev server starts on port 5000.
 3. **Warm up the reference system** (optional, one-time):
    ```bash
@@ -33,6 +33,8 @@ public/
   gltf/           3D models (GLTF)
   audio/          Sound effects
   textures/       Image assets
+scripts/
+  patch-iwsdk.js  Postinstall patches for headless environments
 ```
 
 ## Useful Commands
@@ -58,3 +60,6 @@ npx iwsdk reference api --input-json '{"name":"World.create"}'
 
 - The preview pane shows a white screen — this is expected since WebXR/Three.js needs a GPU for 3D rendering. The headless managed browser handles the runtime.
 - All Three.js classes should be imported from `@iwsdk/core`, not from `three` directly.
+- The `scripts/patch-iwsdk.js` postinstall script applies two patches:
+  1. **SwiftShader** — switches the headless browser from hardware GL to CPU-based rendering
+  2. **Reference validation** — bypasses an archive integrity check that fails due to platform differences in tar/zlib

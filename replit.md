@@ -27,7 +27,6 @@ WebXR starter template using IWSDK v0.4.2 with an ECS architecture on Three.js, 
 ## Replit Environment Setup
 - **Port 5000**, host `0.0.0.0`, `allowedHosts: true` for Replit proxy
 - **mkcert removed** — Replit proxy handles HTTPS
-- **AI port 443** — MCP WebSocket connects through Replit proxy
 - **SwiftShader** — headless Chromium uses CPU rendering (no GPU needed)
 - **GPU auto-detection** — managed Playwright browser supports `IWSDK_GPU=auto|gpu|swiftshader`; no manual SwiftShader patching needed
 

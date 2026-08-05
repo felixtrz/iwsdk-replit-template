@@ -1,8 +1,10 @@
 import {
   AssetManifest,
   AssetType,
+  BoxGeometry,
   Mesh,
   MeshBasicMaterial,
+  MeshStandardMaterial,
   PlaneGeometry,
   SessionMode,
   SRGBColorSpace,
@@ -15,6 +17,7 @@ import {
   DistanceGrabbable,
   MovementMode,
   Interactable,
+  OneHandGrabbable,
   PanelUI,
   PlaybackMode,
   ScreenSpace,
@@ -27,6 +30,8 @@ import { PanelSystem } from "./panel.js";
 import { Robot } from "./robot.js";
 
 import { RobotSystem } from "./robot.js";
+
+import { ControllerInputSystem, CUBE_COLORS, DemoCube } from "./input.js";
 
 const assets: AssetManifest = {
   chimeSound: {
@@ -113,6 +118,17 @@ World.create(document.getElementById("scene-container") as HTMLDivElement, {
       playbackMode: PlaybackMode.FadeRestart,
     });
 
+  const cubeMesh = new Mesh(
+    new BoxGeometry(0.2, 0.2, 0.2),
+    new MeshStandardMaterial({ color: CUBE_COLORS[0] }),
+  );
+  cubeMesh.position.set(0, 1.0, -1.7);
+  world
+    .createTransformEntity(cubeMesh)
+    .addComponent(Interactable)
+    .addComponent(OneHandGrabbable, {})
+    .addComponent(DemoCube);
+
   const panelEntity = world
     .createTransformEntity()
     .addComponent(PanelUI, {
@@ -141,5 +157,23 @@ World.create(document.getElementById("scene-container") as HTMLDivElement, {
   logoBanner.position.set(0, 1, 1.8);
   logoBanner.rotateY(Math.PI);
 
-  world.registerSystem(PanelSystem).registerSystem(RobotSystem);
+  const hudPanelEntity = world
+    .createTransformEntity()
+    .addComponent(PanelUI, {
+      config: "./ui/input-hud.json",
+      maxHeight: 0.6,
+      maxWidth: 1.4,
+    })
+    .addComponent(Interactable)
+    .addComponent(ScreenSpace, {
+      top: "20px",
+      right: "20px",
+      height: "30%",
+    });
+  hudPanelEntity.object3D!.position.set(1.7, 1.1, -1.9);
+
+  world
+    .registerSystem(PanelSystem)
+    .registerSystem(RobotSystem)
+    .registerSystem(ControllerInputSystem);
 });

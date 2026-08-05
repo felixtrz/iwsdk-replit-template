@@ -1,0 +1,77 @@
+<style>
+  .hud-container {
+    align-items: flex-start;
+    padding: 2;
+    width: 60;
+    display: flex;
+    flex-direction: column;
+    background-color: #09090b;
+    border-color: #27272a;
+    border-width: 0.15;
+    border-radius: 3;
+  }
+
+  .hud-heading {
+    font-size: 3;
+    font-weight: medium;
+    color: #fafafa;
+    text-align: left;
+    margin-bottom: 1;
+  }
+
+  .hud-columns {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .hud-column {
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+  }
+
+  .hud-col-title {
+    font-size: 2;
+    font-weight: medium;
+    color: #a1a1aa;
+    text-align: left;
+    margin-bottom: 0.5;
+  }
+
+  .hud-row {
+    font-size: 1.8;
+    color: #71717a;
+    text-align: left;
+    margin-top: 0.3;
+  }
+
+  .hud-legend {
+    font-size: 1.6;
+    color: #52525b;
+    text-align: left;
+    margin-top: 1.5;
+  }
+</style>
+<div class="hud-container">
+  <span class="hud-heading">Controller Input</span>
+  <div class="hud-columns">
+    <div class="hud-column">
+      <span class="hud-col-title">Left</span>
+      <span id="l-x" class="hud-row">X  off</span>
+      <span id="l-y" class="hud-row">Y  off</span>
+      <span id="l-trigger" class="hud-row">Trig  0.00</span>
+      <span id="l-grip" class="hud-row">Grip  off</span>
+      <span id="l-stick" class="hud-row">Stick  0.00, 0.00</span>
+    </div>
+    <div class="hud-column">
+      <span class="hud-col-title">Right</span>
+      <span id="r-a" class="hud-row">A  off</span>
+      <span id="r-b" class="hud-row">B  off</span>
+      <span id="r-trigger" class="hud-row">Trig  0.00</span>
+      <span id="r-grip" class="hud-row">Grip  off</span>
+      <span id="r-stick" class="hud-row">Stick  0.00, 0.00</span>
+    </div>
+  </div>
+  <span class="hud-legend">A scale+  B scale-  X color  Y reset  •  Trigger to grab</span>
+</div>

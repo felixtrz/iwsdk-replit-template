@@ -3,6 +3,52 @@
 ## Overview
 WebXR starter template using IWSDK v0.4.2 with an ECS architecture on Three.js, targeting Meta Quest 3 and similar headsets. Pre-configured for the Replit headless environment.
 
+This repo is the **remix build** for the Meta-device WebXR path: a user forks it
+and asks an agent to turn the reference scene into their idea. It is not a blank
+canvas — the scene that ships is a worked example of everything a headset app
+needs, and the job on remix is to extend it, not to start over.
+
+## Preserve the interaction building blocks (read this first)
+
+The reference scene wires up four things that agents routinely delete when they
+rewrite a scene. An app missing any of them feels broken in a headset. **Carry
+all four into whatever gets built, unless the user explicitly asks to drop one.**
+
+1. **Controller ray / pointer** — `src/ray.ts` (`ControllerRaySystem`). Forces
+   both controller rays permanently visible (`RayDisplayMode.Visible`) and adds
+   emissive hover/press feedback on every `RayInteractable`. IWSDK's default
+   `VisibleOnIntersection` hides the ray until it hits something, which users
+   read as "this app has no pointer".
+2. **Full controller input mapping** — `src/input.ts` (`ControllerInputSystem`).
+   A handler for trigger, grip/squeeze, thumbstick and A/B/X/Y, plus a HUD panel
+   (`ui/input-hud.uikitml`) mirroring live input values.
+3. **Background music + spatial audio** — `src/music.ts`
+   (`BackgroundMusicSystem`) loops `public/audio/ambient-loop.wav`
+   non-positionally; the robot and cube carry positional `AudioSource` chimes
+   that fire on interaction.
+4. **Grabbable objects** — the cube uses `OneHandGrabbable`, the plant uses
+   `DistanceGrabbable`. At least one grabbable entity should always exist.
+
+The header comment in `src/index.ts` repeats this list next to the code. If you
+replace the scene's models and logic, re-attach these systems and components to
+the new entities.
+
+## Where the skills live
+
+This template is referenced by a skills pack that routes "build an app for Meta"
+requests to the right build path. In this workspace it sits at `skills/`,
+alongside this repo:
+
+- `skills/meta-device-router/` — entry point; picks a build path
+- `skills/hz-iwsdk-webxr/` — the skill form of this template (WebXR for Quest),
+  including `references/building-blocks.md`, the long-form version of the list
+  above
+- `skills/hz-react-native-expo/` — React Native / Expo 2D panel apps for Quest
+- `skills/create-webapp/` — web apps for Meta Ray-Ban Display glasses
+
+If you are working from a remix of this repo alone, you do not need the skills —
+this file and `README.md` carry the essentials.
+
 ## Tech Stack
 - **Framework**: @iwsdk/core with elics ECS
 - **Rendering**: Three.js (aliased as super-three)

@@ -73,5 +73,6 @@
       <span id="r-stick" class="hud-row">Stick  0.00, 0.00</span>
     </div>
   </div>
-  <span class="hud-legend">A scale+  B scale-  X color  Y reset  •  Trigger to grab</span>
+  <span class="hud-legend">A scale+  B scale-  X color  Y reset  •  Trigger chime + ray select</span>
+  <span class="hud-legend">L grip music on/off  •  R stick spins cube  •  Stick click stops spin</span>
 </div>

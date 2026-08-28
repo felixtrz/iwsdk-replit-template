@@ -1,8 +1,10 @@
 import {
+  AudioUtils,
   createComponent,
   createSystem,
   Entity,
   eq,
+  Grabbed,
   InputComponent,
   Mesh,
   MeshStandardMaterial,
@@ -14,6 +16,8 @@ import {
   Vector3,
 } from "@iwsdk/core";
 
+import { BackgroundMusic } from "./music.js";
+
 /** Tag for the directly grabbable demo cube that face buttons manipulate. */
 export const DemoCube = createComponent("DemoCube", {});
 
@@ -24,14 +28,37 @@ const SCALE_STEP = 1.15;
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 3.0;
 const HUD_INTERVAL = 0.1; // seconds between HUD refreshes
+const STICK_DEADZONE = 0.15;
+const SPIN_RATE = 3.0; // radians/sec at full thumbstick deflection
 
 /**
- * Reads both XR controller gamepads every frame:
- * - Maps A/B/X/Y face buttons to visible actions on the DemoCube.
- * - Mirrors live button / trigger / grip / thumbstick state onto the HUD panel.
+ * BUILDING BLOCK — full controller input mapping.
+ *
+ * Reads both XR controller gamepads every frame and gives every input on the
+ * Touch controller a visible or audible handler:
+ *
+ * | Input                | Handler                                       |
+ * | -------------------- | --------------------------------------------- |
+ * | A (right)            | scale the cube up                             |
+ * | B (right)            | scale the cube down                           |
+ * | X (left)             | cycle the cube's colour                       |
+ * | Y (left)             | reset colour, scale, position and spin        |
+ * | Trigger (either)     | play the chime SFX on the cube                |
+ * | Grip / squeeze (left)| toggle the background music                   |
+ * | Thumbstick (right)   | spin the cube on its Y axis                   |
+ * | Thumbstick click     | stop the spin                                 |
+ *
+ * Note that IWSDK also consumes some of these: the trigger drives ray select
+ * and distance-grab, grip drives proximity grab, and the locomotion feature
+ * reads the thumbsticks (left glides, right snap-turns). The handlers here
+ * layer on top rather than replacing that.
+ *
+ * The HUD panel mirrors live button / trigger / grip / thumbstick values so you
+ * can confirm input is arriving even when a handler does nothing visible.
  */
 export class ControllerInputSystem extends createSystem({
   cube: { required: [DemoCube] },
+  music: { required: [BackgroundMusic] },
   hud: {
     required: [PanelUI, PanelDocument],
     where: [eq(PanelUI, "config", "./ui/input-hud.json")],
@@ -46,6 +73,7 @@ export class ControllerInputSystem extends createSystem({
   private cubeHomeScale = 1;
   private cubeScale = 1;
   private colorIndex = 0;
+  private cubeSpin = 0; // radians/sec, driven by the right thumbstick
 
   init() {
     this.cubeHome = new Vector3();
@@ -57,6 +85,7 @@ export class ControllerInputSystem extends createSystem({
       this.cubeHomeScale = obj.scale.x;
       this.cubeScale = this.cubeHomeScale;
       this.colorIndex = 0;
+      this.cubeSpin = 0;
     });
 
     this.queries.cube.subscribe("disqualify", (entity) => {
@@ -90,11 +119,12 @@ export class ControllerInputSystem extends createSystem({
     });
   }
 
-  update(_delta: number, time: number) {
+  update(delta: number, time: number) {
     const left = this.input.xr.gamepads.left;
     const right = this.input.xr.gamepads.right;
 
-    this.applyCubeActions(left, right);
+    this.applyCubeActions(left, right, delta);
+    this.applyMusicToggle(left);
 
     if (time - this.lastHud >= HUD_INTERVAL) {
       this.lastHud = time;
@@ -105,6 +135,7 @@ export class ControllerInputSystem extends createSystem({
   private applyCubeActions(
     left: StatefulGamepad | undefined,
     right: StatefulGamepad | undefined,
+    delta: number,
   ) {
     const cubeEntity = this.cubeEntity;
     if (!cubeEntity) {
@@ -112,6 +143,7 @@ export class ControllerInputSystem extends createSystem({
     }
     const mesh = cubeEntity.object3D as Mesh;
 
+    // --- Face buttons -----------------------------------------------------
     if (right?.getButtonDown(InputComponent.A_Button)) {
       this.cubeScale = Math.min(this.cubeScale * SCALE_STEP, MAX_SCALE);
       mesh.scale.setScalar(this.cubeScale);
@@ -129,9 +161,48 @@ export class ControllerInputSystem extends createSystem({
     if (left?.getButtonDown(InputComponent.Y_Button)) {
       this.colorIndex = 0;
       this.cubeScale = this.cubeHomeScale;
+      this.cubeSpin = 0;
       mesh.position.copy(this.cubeHome);
       mesh.scale.setScalar(this.cubeHomeScale);
       (mesh.material as MeshStandardMaterial).color.setHex(CUBE_COLORS[0]);
+    }
+
+    // --- Trigger: spatial SFX --------------------------------------------
+    if (
+      left?.getButtonDown(InputComponent.Trigger) ||
+      right?.getButtonDown(InputComponent.Trigger)
+    ) {
+      AudioUtils.play(cubeEntity);
+    }
+
+    // --- Thumbstick: spin -------------------------------------------------
+    if (
+      left?.getButtonDown(InputComponent.Thumbstick) ||
+      right?.getButtonDown(InputComponent.Thumbstick)
+    ) {
+      this.cubeSpin = 0;
+    }
+    const stick = right?.getAxesValues(InputComponent.Thumbstick);
+    if (stick && Math.abs(stick.x) > STICK_DEADZONE) {
+      this.cubeSpin = stick.x * SPIN_RATE;
+    }
+    // Let the grab system own the transform while the cube is held.
+    if (this.cubeSpin !== 0 && !cubeEntity.hasComponent(Grabbed)) {
+      mesh.rotation.y += this.cubeSpin * delta;
+    }
+  }
+
+  /** Grip / squeeze on the left controller mutes and unmutes the soundtrack. */
+  private applyMusicToggle(left: StatefulGamepad | undefined) {
+    if (!left?.getButtonDown(InputComponent.Squeeze)) {
+      return;
+    }
+    for (const entity of this.queries.music.entities) {
+      if (AudioUtils.isPlaying(entity)) {
+        AudioUtils.pause(entity, 0.3);
+      } else {
+        AudioUtils.play(entity, 0.6);
+      }
     }
   }
 

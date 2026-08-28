@@ -1,3 +1,32 @@
+/**
+ * ============================================================================
+ * INTERACTION BUILDING BLOCKS — keep all four when you remix this template
+ * ============================================================================
+ *
+ * A WebXR app that is missing any of these feels broken in a headset. The
+ * reference scene below wires up every one; if you replace the scene, carry the
+ * blocks over. Full rationale and recipes live in the `hz-iwsdk-webxr` skill at
+ * `skills/hz-iwsdk-webxr/references/building-blocks.md`.
+ *
+ *  1. CONTROLLER RAY / POINTER — `ControllerRaySystem` (src/ray.ts) forces both
+ *     controller rays permanently visible and adds hover/press highlighting on
+ *     every `RayInteractable`.
+ *
+ *  2. FULL CONTROLLER INPUT MAPPING — `ControllerInputSystem` (src/input.ts)
+ *     handles trigger, grip, thumbstick and A/B/X/Y, and mirrors live state onto
+ *     the input HUD panel.
+ *
+ *  3. BACKGROUND MUSIC + SPATIAL AUDIO — `BackgroundMusicSystem` (src/music.ts)
+ *     loops `public/audio/ambient-loop.wav` non-positionally, while the robot
+ *     and the cube play positional chime SFX on interaction.
+ *
+ *  4. GRABBABLE OBJECTS — the cube uses `OneHandGrabbable` (grab it directly),
+ *     the plant uses `DistanceGrabbable` (pull it in with the ray).
+ *
+ * Only drop a block if the user explicitly asks you to.
+ * ============================================================================
+ */
+
 import {
   AssetManifest,
   AssetType,
@@ -16,10 +45,10 @@ import {
   AudioSource,
   DistanceGrabbable,
   MovementMode,
-  Interactable,
   OneHandGrabbable,
   PanelUI,
   PlaybackMode,
+  RayInteractable,
   ScreenSpace,
 } from "@iwsdk/core";
 
@@ -33,9 +62,18 @@ import { RobotSystem } from "./robot.js";
 
 import { ControllerInputSystem, CUBE_COLORS, DemoCube } from "./input.js";
 
+import { BackgroundMusic, BackgroundMusicSystem } from "./music.js";
+
+import { ControllerRaySystem } from "./ray.js";
+
 const assets: AssetManifest = {
   chimeSound: {
     url: "./audio/chime.mp3",
+    type: AssetType.Audio,
+    priority: "background",
+  },
+  ambientMusic: {
+    url: "./audio/ambient-loop.wav",
     type: AssetType.Audio,
     priority: "background",
   },
@@ -93,9 +131,10 @@ World.create(document.getElementById("scene-container") as HTMLDivElement, {
 
   plantMesh.position.set(1.2, 0.85, -1.8);
 
+  // BUILDING BLOCK 4a — grab at a distance by pointing the ray and holding the trigger.
   world
     .createTransformEntity(plantMesh)
-    .addComponent(Interactable)
+    .addComponent(RayInteractable)
     .addComponent(DistanceGrabbable, {
       movementMode: MovementMode.MoveFromTarget,
     });
@@ -108,9 +147,10 @@ World.create(document.getElementById("scene-container") as HTMLDivElement, {
   robotMesh.position.set(-1.2, 0.95, -1.8);
   robotMesh.scale.setScalar(0.5);
 
+  // BUILDING BLOCK 3a — positional SFX: the robot chimes when the ray clicks it.
   world
     .createTransformEntity(robotMesh)
-    .addComponent(Interactable)
+    .addComponent(RayInteractable)
     .addComponent(Robot)
     .addComponent(AudioSource, {
       src: "./audio/chime.mp3",
@@ -118,6 +158,7 @@ World.create(document.getElementById("scene-container") as HTMLDivElement, {
       playbackMode: PlaybackMode.FadeRestart,
     });
 
+  // BUILDING BLOCK 4b — grab directly with the grip button when your hand is close.
   const cubeMesh = new Mesh(
     new BoxGeometry(0.2, 0.2, 0.2),
     new MeshStandardMaterial({ color: CUBE_COLORS[0] }),
@@ -125,9 +166,24 @@ World.create(document.getElementById("scene-container") as HTMLDivElement, {
   cubeMesh.position.set(0, 1.0, -1.7);
   world
     .createTransformEntity(cubeMesh)
-    .addComponent(Interactable)
+    .addComponent(RayInteractable)
     .addComponent(OneHandGrabbable, {})
-    .addComponent(DemoCube);
+    .addComponent(DemoCube)
+    .addComponent(AudioSource, {
+      src: "./audio/chime.mp3",
+      maxInstances: 2,
+      playbackMode: PlaybackMode.FadeRestart,
+    });
+
+  // BUILDING BLOCK 3b — background music: non-positional, looping, plays from
+  // the listener so it stays at a constant level wherever the player walks.
+  world.createTransformEntity().addComponent(BackgroundMusic).addComponent(AudioSource, {
+    src: "./audio/ambient-loop.wav",
+    positional: false,
+    loop: true,
+    autoplay: true,
+    volume: 0.35,
+  });
 
   const panelEntity = world
     .createTransformEntity()
@@ -136,7 +192,7 @@ World.create(document.getElementById("scene-container") as HTMLDivElement, {
       maxHeight: 0.8,
       maxWidth: 1.6,
     })
-    .addComponent(Interactable)
+    .addComponent(RayInteractable)
     .addComponent(ScreenSpace, {
       top: "20px",
       left: "20px",
@@ -164,7 +220,7 @@ World.create(document.getElementById("scene-container") as HTMLDivElement, {
       maxHeight: 0.6,
       maxWidth: 1.4,
     })
-    .addComponent(Interactable)
+    .addComponent(RayInteractable)
     .addComponent(ScreenSpace, {
       top: "20px",
       right: "20px",
@@ -175,5 +231,7 @@ World.create(document.getElementById("scene-container") as HTMLDivElement, {
   world
     .registerSystem(PanelSystem)
     .registerSystem(RobotSystem)
+    .registerSystem(ControllerRaySystem)
+    .registerSystem(BackgroundMusicSystem)
     .registerSystem(ControllerInputSystem);
 });

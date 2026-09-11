@@ -487,8 +487,9 @@ entity.addComponent(DomeGradient, {
 });
 
 // HDR texture sky
+// NOTE: components take `src`. Only AssetManifest entries take `url`.
 entity.addComponent(DomeTexture, {
-  url: '/textures/sky.hdr',
+  src: '/textures/sky.hdr',
 });
 
 // Image-based lighting from gradient

@@ -98,7 +98,7 @@ entity.addComponent(PhysicsShape, {
 | ------------- | ------------------ | ----------- | ------------------------------------------------------------------------------------- |
 | `shape`       | `PhysicsShapeType` | `Auto`      | Collision shape type                                                                  |
 | `dimensions`  | `Vec3`             | `[0, 0, 0]` | Shape-specific dimensions array. Not applicable when `PhysicsShapeType.Auto` is used. |
-| `density`     | `Float32`          | `1.0`       | Mass density (kg/m^3). Higher = heavier.                                              |
+| `density`     | `Float32`          | `1.0`       | Mass density in kg/m³ (SI, passed straight to Havok). Higher = heavier. The `1.0` default is a nominal unit density ≈ air, **not** water — see [Material Tuning Guide](#material-tuning-guide). |
 | `restitution` | `Float32`          | `0.0`       | Bounciness (0 = no bounce, 1 = perfect bounce)                                        |
 | `friction`    | `Float32`          | `0.5`       | Surface friction (0 = ice, 1 = rubber)                                                |
 
@@ -384,17 +384,38 @@ world.registerSystem(BuoyancySystem, { priority: 5 });
 
 ## Material Tuning Guide
 
-Adjust `density`, `restitution`, and `friction` on `PhysicsShape` to simulate different materials:
+Adjust `density`, `restitution`, and `friction` on `PhysicsShape` to simulate different materials.
 
-| Material    | Density | Restitution | Friction |
-| ----------- | ------- | ----------- | -------- |
-| Wood        | 0.6     | 0.3         | 0.5      |
-| Metal/Steel | 7.8     | 0.2         | 0.4      |
-| Rubber      | 1.1     | 0.8         | 0.9      |
-| Ice         | 0.9     | 0.1         | 0.05     |
-| Concrete    | 2.4     | 0.1         | 0.7      |
-| Foam/Light  | 0.05    | 0.1         | 0.6      |
-| Bouncy ball | 1.0     | 0.95        | 0.5      |
+**Density is in kg/m³.** The value is passed straight to Havok unscaled, and Havok
+works in SI units (metres, kilograms, seconds), so these are real-world densities —
+not the g/cm³ figures you'll find in most material tables.
+
+| Material    | Density (kg/m³) | Restitution | Friction |
+| ----------- | --------------- | ----------- | -------- |
+| Foam/Light  | 50              | 0.1         | 0.6      |
+| Wood        | 600             | 0.3         | 0.5      |
+| Ice         | 900             | 0.1         | 0.05     |
+| Bouncy ball | 1000            | 0.95        | 0.5      |
+| Rubber      | 1100            | 0.8         | 0.9      |
+| Concrete    | 2400            | 0.1         | 0.7      |
+| Metal/Steel | 7800            | 0.2         | 0.4      |
+
+⚠️ **The component default is `density: 1.0`, which is 1 kg/m³ — roughly air, not
+water.** It is a nominal unit density, not a material. So an object left at the
+default next to one set to steel (7800) has a 7800:1 mass ratio, and the light one
+will get flung around by every collision.
+
+Pick one convention per scene and stick to it:
+
+- **Real SI values** (the table above) — set `density` explicitly on every dynamic
+  body. Required if you use `applyImpulse`/`applyForce` anywhere, since those are
+  absolute and mass-dependent.
+- **Relative values** (wood 0.6, steel 7.8, …) — fine when nothing but gravity and
+  collisions act on the scene, because uniformly scaling all masses leaves the
+  behaviour unchanged. Breaks the moment you apply an explicit force.
+
+Mixing the two is what produces "my object won't move" and "my object launched
+into orbit".
 
 ## System Priority Order
 
